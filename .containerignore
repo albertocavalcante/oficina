@@ -1,0 +1,43 @@
+# Git
+.git/
+.github/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*~
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go build artifacts
+/server
+/agent
+*.exe
+coverage.out
+coverage.html
+test-output.json
+
+# UI build artifacts (rebuilt inside container)
+ui/node_modules/
+ui/dist/
+ui/.svelte-kit/
+
+# Dev tooling (not needed at runtime)
+tools/
+tools.go.mod
+tools.go.sum
+.golangci.toml
+lefthook.yml
+lefthook-local.yml
+sonar-project.properties
+.envrc
+
+# Docs
+*.md
+LICENSE

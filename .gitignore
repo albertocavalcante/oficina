@@ -1,0 +1,51 @@
+# Binaries
+/oficina
+/server
+/agent
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.o
+*.a
+
+# Coverage
+coverage.out
+coverage.html
+*.coverprofile
+
+# Test results
+test-output.json
+test-results.xml
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+bin/
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Lefthook local overrides
+lefthook-local.yml
+
+# UI
+ui/dist/
+ui/node_modules/
+ui/.svelte-kit/

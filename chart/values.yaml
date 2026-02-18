@@ -1,0 +1,44 @@
+# BestEffort QoS: no resource requests/limits are set by default.
+# Kubernetes assigns the BestEffort QoS class to pods without them.
+# To change QoS, set server.resources / agent.resources accordingly.
+
+server:
+  image:
+    repository: oficina-server
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+  resources: {}
+  nodeSelector: {}
+  tolerations: []
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  ingress:
+    enabled: false
+    # Ingress | HTTPProxy (Project Contour)
+    kind: Ingress
+    host: ""
+    annotations: {}
+    # Ingress-only
+    className: ""
+    tls: []
+    # HTTPProxy-only
+    httpProxy:
+      tls:
+        secretName: ""
+
+agent:
+  image:
+    repository: oficina-agent
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  name: oficina-agent
+  labels: ""
+  resources: {}
+  nodeSelector: {}
+  tolerations: []

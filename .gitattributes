@@ -1,0 +1,64 @@
+# ─── Export Ignore ──────────────────────────────────────
+# Excluded from `git archive`, Go module proxy, GitHub release tarballs
+
+# CI / CD
+.github/ export-ignore
+
+# Git hooks & config
+lefthook.yml export-ignore
+.pre-commit-config.yaml export-ignore
+
+# Linter / formatter config
+.golangci.toml export-ignore
+dprint.json export-ignore
+.editorconfig export-ignore
+
+# Task runner
+Justfile export-ignore
+
+# Tool dependencies
+tools/ export-ignore
+tools.go.mod export-ignore
+tools.go.sum export-ignore
+
+# Agent / AI config
+AGENTS.md export-ignore
+CLAUDE.md export-ignore
+.claude/ export-ignore
+.cursor/ export-ignore
+.gemini/ export-ignore
+
+# Docs & meta
+CONTRIBUTING.md export-ignore
+CHANGELOG.md export-ignore
+docs/ export-ignore
+plan/ export-ignore
+explore/ export-ignore
+
+# IDE settings
+.vscode/ export-ignore
+.idea/ export-ignore
+
+# Scripts
+scripts/ export-ignore
+
+# SonarCloud
+sonar-project.properties export-ignore
+
+# Misc dev files
+.envrc export-ignore
+.shellcheckrc export-ignore
+.gitattributes export-ignore
+
+# Go test fixtures
+testdata/ export-ignore
+**/testdata/ export-ignore
+
+# Go coverage artifacts
+*.out export-ignore
+coverage.* export-ignore
+
+# ─── Linguist ───────────────────────────────────────────
+# Exclude from GitHub language stats
+testdata/** linguist-generated
+**/testdata/** linguist-generated

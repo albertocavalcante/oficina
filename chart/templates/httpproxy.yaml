@@ -1,0 +1,25 @@
+{{- if and .Values.server.ingress.enabled (eq .Values.server.ingress.kind "HTTPProxy") }}
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: {{ include "oficina.fullname" . }}-server
+  labels:
+    {{- include "oficina.serverLabels" . | nindent 4 }}
+  {{- with .Values.server.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  virtualhost:
+    fqdn: {{ .Values.server.ingress.host }}
+    {{- with .Values.server.ingress.httpProxy.tls.secretName }}
+    tls:
+      secretName: {{ . }}
+    {{- end }}
+  routes:
+    - conditions:
+        - prefix: /
+      services:
+        - name: {{ include "oficina.fullname" . }}-server
+          port: {{ .Values.server.service.port }}
+{{- end }}
