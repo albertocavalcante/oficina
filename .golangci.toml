@@ -1,0 +1,65 @@
+version = "2"
+
+[linters]
+enable = [
+  "bodyclose",
+  "copyloopvar",
+  "dogsled",
+  "dupl",
+  "errcheck",
+  "exhaustive",
+  "gochecknoinits",
+  "goconst",
+  "gocritic",
+  "gocyclo",
+  "gosec",
+  "govet",
+  "ineffassign",
+  "intrange",
+  "misspell",
+  "mnd",
+  "nakedret",
+  "noctx",
+  "nolintlint",
+  "prealloc",
+  "staticcheck",
+  "unconvert",
+  "unparam",
+  "unused",
+  "whitespace",
+]
+
+[linters-settings.gocyclo]
+min-complexity = 40
+
+[linters-settings.mnd]
+ignored-functions = ["strconv.ParseFloat", "strconv.ParseInt", "strconv.ParseUint", "strconv.FormatFloat", "strconv.FormatInt", "strconv.FormatUint"]
+
+[linters-settings.gocritic]
+enabled-tags = ["diagnostic", "style", "performance"]
+disabled-checks = ["hugeParam"]
+
+[linters-settings.nakedret]
+max-func-lines = 30
+
+[linters-settings.nolintlint]
+require-explanation = true
+require-specific = true
+
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[[issues.exclude-rules]]
+path = "_test\\.go"
+linters = ["mnd", "funlen", "gocyclo", "dupl", "goconst"]
+
+[[issues.exclude-rules]]
+path = "_testing\\.go"
+linters = ["mnd", "funlen", "gocyclo", "dupl", "goconst"]
+
+[[issues.exclude-rules]]
+path = "e2e/"
+linters = ["mnd", "funlen", "gocyclo", "dupl", "goconst"]
+
+[formatters]
+enable = ["gofmt", "goimports"]
