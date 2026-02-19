@@ -209,6 +209,16 @@ container-agent:
 # Build all container images
 container: container-server container-agent
 
+# ─── Compose ──────────────────────────────────────────
+
+# Start server + agents with Docker/Podman Compose
+compose-up *ARGS:
+    {{engine}} compose -f examples/compose/compose.yaml up --build {{ARGS}}
+
+# Stop and remove Compose services
+compose-down *ARGS:
+    {{engine}} compose -f examples/compose/compose.yaml down {{ARGS}}
+
 # ─── Helm ───────────────────────────────────────────────
 
 # Install chart into current kubectl context

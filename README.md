@@ -172,6 +172,41 @@ Works the same with `podman`.
 
 The server image is ~10 MB (scratch + static Go binary + UI assets). The agent image is ~15 MB (alpine + static Go binary).
 
+## Deployment Examples
+
+### Compose
+
+The quickest way to run the full stack locally. Builds from source and starts a server with two agents. Works with both Docker Compose and Podman Compose:
+
+```bash
+just compose-up
+# → http://localhost:8080 — dashboard with 2 agents
+
+just compose-down
+```
+
+Or without `just`:
+
+```bash
+cd examples/compose
+docker compose up --build   # or: podman compose up --build
+```
+
+See [`examples/compose/`](examples/compose/) for details.
+
+### Apple Containers (macOS 26+)
+
+For macOS 26+ on Apple Silicon, a shell script orchestrates the native `container` runtime:
+
+```bash
+cd examples/apple-containers
+./run.sh
+# → http://localhost:8080 — dashboard with 1 agent
+# Ctrl+C to stop
+```
+
+See [`examples/apple-containers/`](examples/apple-containers/) for details.
+
 ## Helm
 
 A minimal Helm chart lives in `chart/`. Deploys as **BestEffort** QoS by default (no resource requests/limits).

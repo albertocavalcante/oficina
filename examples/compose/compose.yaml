@@ -1,0 +1,37 @@
+# oficina — Docker Compose / Podman Compose
+#
+# Builds from source by default. To use pre-built images instead,
+# comment out the `build:` blocks and uncomment the `image:` lines.
+#
+# Usage:
+#   docker compose up --build        # build & start
+#   docker compose down              # stop & remove
+
+services:
+  server:
+    build:
+      context: ../..
+      dockerfile: Containerfile
+    # image: oficina-server
+    ports:
+      - "8080:8080"
+
+  agent-01:
+    build:
+      context: ../..
+      dockerfile: Containerfile.agent
+    # image: oficina-agent
+    command: ["--server", "http://server:8080", "--name", "agent-01", "--labels", "docker,general"]
+    depends_on:
+      - server
+    restart: on-failure
+
+  agent-02:
+    build:
+      context: ../..
+      dockerfile: Containerfile.agent
+    # image: oficina-agent
+    command: ["--server", "http://server:8080", "--name", "agent-02", "--labels", "docker,build"]
+    depends_on:
+      - server
+    restart: on-failure
