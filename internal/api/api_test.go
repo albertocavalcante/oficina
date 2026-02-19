@@ -27,6 +27,16 @@ func newTestServer(t *testing.T) (http.Handler, *store.Store) {
 	return srv.Handler(), s
 }
 
+func newTestServerFast(t *testing.T) (*Server, *store.Store) {
+	t.Helper()
+	s := store.New()
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	srv := New(s, logger)
+	srv.longPollTimeout = 100 * time.Millisecond
+	srv.claimPollInterval = 10 * time.Millisecond
+	return srv, s
+}
+
 func doRequest(t *testing.T, handler http.Handler, method, path string, body any, headers ...string) *httptest.ResponseRecorder {
 	t.Helper()
 	var reqBody io.Reader
@@ -549,5 +559,102 @@ func TestStreamLogsLiveDelivery(t *testing.T) {
 
 	if !strings.Contains(data, "live-line") {
 		t.Errorf("expected %q in SSE data, got %q", "live-line", data)
+	}
+}
+
+// --- Configurable Timeout Tests ---
+
+func TestClaimJobLongPollTimeout(t *testing.T) {
+	srv, s := newTestServerFast(t)
+	handler := srv.Handler()
+	agent := s.RegisterAgent(&models.AgentRegisterRequest{Name: "timeout-agent", OS: "linux", Arch: "amd64"})
+
+	// No jobs available — long-poll should time out and return 204.
+	rec := doRequest(t, handler, "GET", "/api/agent/next", nil, "X-Agent-ID", agent.ID)
+	if rec.Code != http.StatusNoContent {
+		t.Errorf("expected 204, got %d", rec.Code)
+	}
+}
+
+func TestClaimJobTickerClaim(t *testing.T) {
+	srv, s := newTestServerFast(t)
+	handler := srv.Handler()
+	agent := s.RegisterAgent(&models.AgentRegisterRequest{Name: "ticker-agent", OS: "linux", Arch: "amd64"})
+
+	// Start long-poll in a goroutine, then create a job after a short delay.
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/agent/next", nil)
+	req.Header.Set("X-Agent-ID", agent.ID)
+
+	done := make(chan struct{})
+	go func() {
+		handler.ServeHTTP(rec, req)
+		close(done)
+	}()
+
+	// Create job after 30ms — ticker (10ms interval) should pick it up.
+	time.Sleep(30 * time.Millisecond)
+	s.CreateJob(&models.SubmitJobRequest{Name: "ticker-job", Command: "echo ticker"})
+
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("handler did not return after ticker claimed job")
+	}
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	job := decodeJSON[models.Job](t, rec)
+	if job.Status != models.JobStatusRunning {
+		t.Errorf("expected running, got %q", job.Status)
+	}
+}
+
+func TestStreamLogsKeepaliveAndDoneAfterTimeout(t *testing.T) {
+	srv, s := newTestServerFast(t)
+	handler := srv.Handler()
+	agent := s.RegisterAgent(&models.AgentRegisterRequest{Name: "keepalive-agent", OS: "linux", Arch: "amd64"})
+
+	job := s.CreateJob(&models.SubmitJobRequest{Name: "keepalive-test", Command: "echo keep"})
+	s.ClaimJob(agent.ID) // Running — handler will subscribe.
+
+	testSrv := httptest.NewServer(handler)
+	defer testSrv.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", testSrv.URL+"/api/jobs/"+job.ID+"/stream", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req) //nolint:gosec // test server URL is safe
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	// Wait for the keepalive timeout (100ms) to fire, then complete the job.
+	time.Sleep(150 * time.Millisecond)
+	if err := s.CompleteJob(job.ID, &models.AgentJobResult{ExitCode: 0}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Read all SSE output.
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	output := string(body)
+
+	// Should contain keepalive comment.
+	if !strings.Contains(output, ": keepalive") {
+		t.Errorf("expected keepalive comment in output:\n%s", output)
+	}
+
+	// Should contain done event.
+	if !strings.Contains(output, "event: done") {
+		t.Errorf("expected done event in output:\n%s", output)
 	}
 }

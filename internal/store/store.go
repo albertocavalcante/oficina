@@ -58,12 +58,16 @@ func (s *Store) CreateJob(req *models.SubmitJobRequest) *models.Job {
 	return job
 }
 
-// GetJob returns a job by ID.
+// GetJob returns a snapshot of a job by ID.
 func (s *Store) GetJob(id string) (*models.Job, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	j, ok := s.jobs[id]
-	return j, ok
+	if !ok {
+		return nil, false
+	}
+	cp := *j
+	return &cp, true
 }
 
 // ListJobs returns all jobs, newest first.

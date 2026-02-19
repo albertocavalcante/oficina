@@ -14,19 +14,26 @@ import (
 )
 
 const (
-	longPollTimeout   = 30 * time.Second
-	claimPollInterval = 2 * time.Second
+	defaultLongPollTimeout   = 30 * time.Second
+	defaultClaimPollInterval = 2 * time.Second
 )
 
 // Server is the oficina HTTP server.
 type Server struct {
-	store  *store.Store
-	logger *slog.Logger
+	store             *store.Store
+	logger            *slog.Logger
+	longPollTimeout   time.Duration
+	claimPollInterval time.Duration
 }
 
 // New creates a new API server.
 func New(s *store.Store, logger *slog.Logger) *Server {
-	return &Server{store: s, logger: logger}
+	return &Server{
+		store:             s,
+		logger:            logger,
+		longPollTimeout:   defaultLongPollTimeout,
+		claimPollInterval: defaultClaimPollInterval,
+	}
 }
 
 // Handler returns the HTTP handler with all routes.
@@ -154,7 +161,7 @@ func (s *Server) handleStreamLogs(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		case <-r.Context().Done():
 			return
-		case <-time.After(longPollTimeout):
+		case <-time.After(s.longPollTimeout):
 			// Send keepalive comment.
 			_, _ = fmt.Fprint(w, ": keepalive\n\n")
 			flusher.Flush()
@@ -224,9 +231,9 @@ func (s *Server) handleClaimJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Long-poll: check every 2 seconds up to the timeout.
-	ticker := time.NewTicker(claimPollInterval)
+	ticker := time.NewTicker(s.claimPollInterval)
 	defer ticker.Stop()
-	deadline := time.NewTimer(longPollTimeout)
+	deadline := time.NewTimer(s.longPollTimeout)
 	defer deadline.Stop()
 
 	for {
