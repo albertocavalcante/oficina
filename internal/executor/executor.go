@@ -26,6 +26,7 @@ type Result struct {
 func Run(ctx context.Context, job *models.Job, onLine func(models.LogLine)) Result {
 	shell, flag := shellCommand(job.Shell)
 	cmd := exec.CommandContext(ctx, shell, flag, job.Command) //nolint:gosec // executing user-provided commands is the core purpose
+	setupProcessGroup(cmd)
 
 	// Inherit parent environment and overlay job-specific variables.
 	cmd.Env = os.Environ()
